@@ -5,6 +5,7 @@ import { existsSync } from "https://deno.land/std/fs/mod.ts";
 const locals = "localhost";
 const separator = "/";
 const git_alias = ":";
+const list_cmd = "--list";
 
 function list(cache: string, repo_dir: string) {
   const proc = new Deno.Command("git", {
@@ -67,13 +68,25 @@ function oclone() {
       options.push(opt);
     }
   }
-  if (first === "--list") {
-    if (Deno.args.length !== 1) {
-      console.log("invalid list request");
-      Deno.exit(1);
-    }
-    list(cache_file, repos);
-    return;
+  switch (first) {
+    case list_cmd:
+      if (Deno.args.length !== 1) {
+        console.log("invalid list request");
+        Deno.exit(1);
+      }
+      list(cache_file, repos);
+      return;
+    case "--bash":
+      console.log(`#!/usr/bin/env bash
+_git_oclone() {
+  local cur opts
+  if [ "$COMP_CWORD" -eq 2 ]; then
+    cur=\${COMP_WORDS[COMP_CWORD]}
+    opts=$(git oclone ${list_cmd})
+    COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
+  fi
+}`);
+      return;
   }
   let is_local = false;
   for (const suffix of ["", ".git"]) {
