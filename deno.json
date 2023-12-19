@@ -1,0 +1,8 @@
+{
+  "tasks": {
+    "git-uncommitted": "deno compile --allow-env --allow-read --allow-run -o build/git-uncommitted git-uncommitted.ts",
+    "git-oclone": "deno compile --allow-env --allow-read --allow-run --allow-write -o build/git-oclone git-oclone.ts",
+    "sys-update": "deno compile --allow-env --allow-read --allow-run --allow-write -o build/sys-update sys-update.ts",
+    "transcode-media": "deno compile --allow-read --allow-run --allow-write -o build/transcode-media transcode-media.ts"
+  }
+}
