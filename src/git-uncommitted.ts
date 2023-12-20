@@ -1,7 +1,6 @@
 import { join } from "https://deno.land/std/path/mod.ts";
 import { existsSync } from "https://deno.land/std/fs/mod.ts";
 import { red, yellow } from "https://deno.land/std/fmt/colors.ts";
-import { main } from "./generated.ts";
 
 class Result {
   private matched: boolean;
@@ -112,15 +111,15 @@ function stat(dir: string, early: boolean): Array<string> {
   return lines;
 }
 
-function uncommit() {
+export function uncommit(args: Array<string>) {
   const dirs = Deno.env.get("GIT_UNCOMMIT");
   if (dirs === undefined || dirs === "") {
     console.log("GIT_UNCOMMIT not set");
     Deno.exit(1);
   }
   let quiet = false;
-  if (Deno.args.length > 0) {
-    switch (Deno.args[0]) {
+  if (args.length > 0) {
+    switch (args[0]) {
       case "--pwd": {
         const cwd = Deno.cwd();
         const working = new Git("rev-parse", ["--is-inside-work-tree"])
@@ -164,7 +163,4 @@ function uncommit() {
   if (items.length > 0) {
     Deno.exit(1);
   }
-}
-if (import.meta.main) {
-  main(uncommit);
 }

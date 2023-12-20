@@ -1,4 +1,3 @@
-import { main } from "./generated.ts";
 import { join } from "https://deno.land/std/path/mod.ts";
 import { existsSync } from "https://deno.land/std/fs/mod.ts";
 
@@ -41,8 +40,8 @@ function list(cache: string, repo_dir: string) {
   });
 }
 
-function oclone() {
-  if (Deno.args.length === 0) {
+export function oclone(args: Array<string>) {
+  if (args.length === 0) {
     console.log("argument required");
     Deno.exit(1);
   }
@@ -60,7 +59,7 @@ function oclone() {
   let is_first = true;
   let first = "";
   const options: Array<string> = ["clone"];
-  for (const opt of Deno.args) {
+  for (const opt of args) {
     if (is_first) {
       first = opt;
       is_first = false;
@@ -70,7 +69,7 @@ function oclone() {
   }
   switch (first) {
     case list_cmd:
-      if (Deno.args.length !== 1) {
+      if (args.length !== 1) {
         console.log("invalid list request");
         Deno.exit(1);
       }
@@ -110,8 +109,4 @@ _git_oclone() {
   Deno.writeTextFile(cache_file, first, { append: true });
   new Deno.Command("sort", { args: ["-u", "-o", cache_file, cache_file] })
     .spawn();
-}
-
-if (import.meta.main) {
-  main(oclone);
 }

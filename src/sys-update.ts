@@ -1,8 +1,7 @@
 import { basename, join } from "https://deno.land/std/path/mod.ts";
-import { main } from "./generated.ts";
 import { existsSync, moveSync } from "https://deno.land/std/fs/mod.ts";
 
-function sync() {
+export function sync() {
   const home = Deno.env.get("HOME");
   if (home === undefined) {
     console.log("HOME is not set");
@@ -111,8 +110,4 @@ function command(
     cwd: cwd,
   });
   return proc.outputSync().code === 0;
-}
-
-if (import.meta.main) {
-  main(sync);
 }

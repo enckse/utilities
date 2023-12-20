@@ -1,6 +1,5 @@
 import { extname } from "https://deno.land/std/path/mod.ts";
 import { format } from "https://deno.land/std/datetime/mod.ts";
-import { main } from "./generated.ts";
 import { existsSync } from "https://deno.land/std/fs/mod.ts";
 import { encodeHex } from "https://deno.land/std/encoding/hex.ts";
 
@@ -9,7 +8,7 @@ const heic_file = ".heic";
 const name_arg = "{NAME}";
 const in_arg = "{INPUT}";
 
-async function transcode() {
+export async function transcode() {
   let fail = 0;
   for (const file of Deno.readDirSync(".")) {
     const ext = extname(file.name).toLowerCase();
@@ -82,8 +81,4 @@ async function transcode() {
     Deno.removeSync(file.name);
   }
   Deno.exit(fail);
-}
-
-if (import.meta.main) {
-  main(transcode);
 }
