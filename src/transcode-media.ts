@@ -38,9 +38,13 @@ async function transcode() {
       "SHA-256",
       new TextEncoder().encode(file.name),
     );
-
+    let prefix = "";
+    const day = now.getDate();
+    if (day < 10) {
+      prefix = "0";
+    }
     const hash = encodeHex(buffer).substring(0, 7);
-    const name = `${now.getFullYear()}.T_${time}.${hash}.${target}`;
+    const name = `${prefix}${day}.T_${time}.${hash}.${target}`;
     console.log(`${file.name} -> ${name}`);
     if (existsSync(name)) {
       console.log("   ...already exists...");
