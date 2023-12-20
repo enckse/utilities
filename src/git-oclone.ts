@@ -52,7 +52,11 @@ export function oclone(args: Array<string>) {
   }
   const cache_dir = join(home, ".local", "state");
   const cache_file = join(cache_dir, "oclone.hst");
-  const repos = join(home, "Active", "git");
+  const repos = Deno.env.get("GIT_SOURCES");
+  if (repos === undefined) {
+    console.log("GIT_SOURCES is not set");
+    return;
+  }
   if (!existsSync(cache_dir)) {
     Deno.mkdirSync(cache_dir);
   }
