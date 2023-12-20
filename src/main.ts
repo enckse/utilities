@@ -4,12 +4,14 @@ import { transcode } from "./transcode-media.ts";
 import { uncommit } from "./git-uncommitted.ts";
 import { oclone } from "./git-oclone.ts";
 import { sync } from "./sys-update.ts";
+import { lockbox } from "./lb.ts";
 
 const transcode_media_command = "transcode-media";
 const git_oclone_command = "git-oclone";
 const git_uncommitted_command = "git-uncommitted";
 const sys_update_command = "sys-update";
 const executable = "utility-wrapper";
+const lb_command = "lb";
 
 function main() {
   if (Deno.args.length === 0) {
@@ -43,6 +45,9 @@ function main() {
     case git_oclone_command:
       oclone(args);
       break;
+    case lb_command:
+      lockbox(args);
+      break;
     case "generate": {
       if (args.length !== 1) {
         console.log("target required");
@@ -55,6 +60,7 @@ function main() {
           git_oclone_command,
           git_uncommitted_command,
           sys_update_command,
+          lb_command,
         ]
       ) {
         Deno.writeTextFileSync(

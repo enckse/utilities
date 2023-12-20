@@ -15,5 +15,6 @@ $(OBJECT): src/*.ts src/generated.ts
 	deno task compile
 
 install:
+	mkdir -p $(DESTDIR)
 	cp -v $(BUILD)* $(DESTDIR)/
 	$(OBJECT) generate $(DESTDIR)/
