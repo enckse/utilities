@@ -32,7 +32,7 @@ export function sync() {
     Deno.exit(1);
   }
   const config = join(home, ".config");
-  const config_file = join(config, "voidedtech", "repos.json");
+  const config_file = join(config, "voidedtech", "upstreams.json");
   const packs = join(config, "nvim", "pack", "plugins", "start");
   const data = new TextDecoder().decode(Deno.readFileSync(config_file));
   const cfg = JSON.parse(data);
