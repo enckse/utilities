@@ -13,8 +13,8 @@ function sync() {
     console.log("TASK_CACHE not set");
     Deno.exit(1);
   }
-  console.log("brew operations");
   for (const sub of ["update", "upgrade"]) {
+    console.log(`=> brew operation: ${sub}`);
     if (!command("brew", [sub], undefined)) {
       console.log(`brew ${sub} failed`);
       Deno.exit(1);
