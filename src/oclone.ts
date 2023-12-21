@@ -6,7 +6,7 @@ const SEPARATOR = "/";
 const GIT_ALIAS = ":";
 const LIST_CMD = "--list";
 
-function list(cache: string, repo_dir: string) {
+function list(cache: string, repoDir: string) {
   const proc = new Deno.Command("git", {
     args: ["config", "--list"],
     stdout: "piped",
@@ -22,8 +22,8 @@ function list(cache: string, repo_dir: string) {
     }
     options.push(line.split("=")[1]);
   }
-  if (existsSync(repo_dir)) {
-    for (const dir of Deno.readDirSync(repo_dir)) {
+  if (existsSync(repoDir)) {
+    for (const dir of Deno.readDirSync(repoDir)) {
       options.push(dir.name + SEPARATOR);
     }
   }

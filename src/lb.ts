@@ -5,45 +5,45 @@ import { encodeHex } from "std/encoding/hex.ts";
 import { parse } from "std/csv/mod.ts";
 import { red } from "std/fmt/colors.ts";
 
-const list_command = "ls";
-const show_command = "show";
-const clip_command = "clip";
-const totp_command = "totp";
-const pb_command = "clipboard";
-const totp_tokens = "/totp";
-const is_group = "/";
-const executable = "lb";
-const bash_completion = `# ${executable} completion
+const LIST_COMMAND = "ls";
+const SHOW_COMMAND = "show";
+const CLIP_COMMAND = "clip";
+const TOTP_COMMAND = "totp";
+const CLEAR_COMMAND = "clipboard";
+const TOTP_TOKEN = "/totp";
+const GROUP_SEPARATOR = "/";
+const EXECUTABLE = "lb";
+const BASH_COMPLETION = `# ${EXECUTABLE} completion
 
-_${executable}() {
+_${EXECUTABLE}() {
   local cur opts
   cur=\${COMP_WORDS[COMP_CWORD]}
   if [ "$COMP_CWORD" -eq 1 ]; then
-    opts="\${opts}${list_command} "
-    opts="\${opts}${show_command} "
-    opts="\${opts}${clip_command} "
-    opts="\${opts}${totp_command} "
+    opts="\${opts}${LIST_COMMAND} "
+    opts="\${opts}${SHOW_COMMAND} "
+    opts="\${opts}${CLIP_COMMAND} "
+    opts="\${opts}${TOTP_COMMAND} "
     # shellcheck disable=SC2207
     COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
   else
     if [ "$COMP_CWORD" -eq 2 ]; then
       case \${COMP_WORDS[1]} in
-        "${totp_command}")
-          opts="${list_command} "
-          opts="$opts ${show_command}"
-          opts="$opts ${clip_command}"
+        "${TOTP_COMMAND}")
+          opts="${LIST_COMMAND} "
+          opts="$opts ${SHOW_COMMAND}"
+          opts="$opts ${CLIP_COMMAND}"
           ;;
-        "${show_command}" | "${clip_command}" )
-          opts=$(${executable} ${list_command})
+        "${SHOW_COMMAND}" | "${CLIP_COMMAND}" )
+          opts=$(${EXECUTABLE} ${LIST_COMMAND})
           ;;
       esac
     else
       if [ "$COMP_CWORD" -eq 3 ]; then
         case "\${COMP_WORDS[1]}" in
-          "${totp_command}${totp_command}${totp_command}${totp_command}")
+          "${TOTP_COMMAND}")
             case "\${COMP_WORDS[2]}" in
-              "${show_command}" | "${clip_command}")
-                opts=$(${executable} ${totp_command} ${list_command})
+              "${SHOW_COMMAND}" | "${CLIP_COMMAND}")
+                opts=$(${EXECUTABLE} ${TOTP_COMMAND} ${LIST_COMMAND})
                 ;;
             esac
             ;;
@@ -57,9 +57,9 @@ _${executable}() {
   fi
 }
 
-complete -F _${executable} -o bashdefault ${executable}`;
+complete -F _${EXECUTABLE} -o bashdefault ${EXECUTABLE}`;
 
-async function stdin_stdout_command(
+async function inOutCommand(
   stdin: Uint8Array,
   cmd: string,
   args: Array<string>,
@@ -79,33 +79,24 @@ async function stdin_stdout_command(
 }
 
 class Config {
-  private database: string;
-  private keyfile: string;
-  private command: string;
-  private command_args: Array<string>;
-  private app: string;
-  private clip: number;
-  private sync: string;
-  private root: string;
-  private key: Uint8Array | undefined;
+  private readonly database: string;
+  private readonly keyfile: string;
+  private readonly command: string;
+  private readonly command_args: Array<string>;
+  private key?: Uint8Array;
   constructor(
-    root: string,
+    private readonly root: string,
     database: string,
     key: Array<string>,
     keyfile: string,
-    app: string,
-    clipboard: number,
-    sync: string,
+    private readonly app: string,
+    private readonly clip: number,
+    private readonly sync: string,
   ) {
     this.database = join(root, database);
     this.keyfile = join(root, keyfile);
-    this.root = root;
     this.command = key[0];
     this.command_args = key.slice(1);
-    this.app = app;
-    this.clip = clipboard;
-    this.sync = sync;
-    this.key = undefined;
   }
   initialize() {
     if (this.sync === undefined || this.sync === "") {
@@ -123,26 +114,29 @@ class Config {
       },
     );
   }
-  async clear_clipboard(hash: string, count: number) {
+  async clearClipboard(hash: string, count: number) {
     if (count === this.clip) {
-      await stdin_stdout_command(new Uint8Array(0), "pbcopy", []);
+      await inOutCommand(new Uint8Array(0), "pbcopy", []);
       return;
     }
     setTimeout(async () => {
       const cmd = new Deno.Command("pbpaste", { stdout: "piped" });
       const stdout = cmd.outputSync().stdout;
-      const hashed = await hash_value(
+      const hashed = await hashValue(
         new TextEncoder().encode(new TextDecoder().decode(stdout).trim()),
       );
       if (hashed == hash) {
-        this.clear_clipboard(hash, count + 1);
+        this.clearClipboard(hash, count + 1);
       }
     }, 1000);
   }
-  async query(arg: string, args: Array<string>): Promise<Array<string>> {
+  private async query(
+    arg: string,
+    args: Array<string>,
+  ): Promise<Array<string>> {
     return await this.keepassxc(this.database, arg, args);
   }
-  async keepassxc(
+  private async keepassxc(
     store: string | undefined,
     arg: string,
     args: Array<string>,
@@ -157,61 +151,61 @@ class Config {
         new TextDecoder().decode(stdout).trim(),
       );
     }
-    let use_store = store;
-    if (use_store === undefined) {
-      use_store = this.database;
+    let useStore = store;
+    if (useStore === undefined) {
+      useStore = this.database;
     }
-    let app_args: Array<string> = [
+    const appArgs: Array<string> = [
       arg,
       "--quiet",
       "--key-file",
       this.keyfile,
-      use_store,
+      useStore,
+      ...args,
     ];
-    app_args = app_args.concat(args);
-    const data = await stdin_stdout_command(this.key, this.app, app_args);
+    const data = await inOutCommand(this.key, this.app, appArgs);
     return data.split("\n");
   }
 
-  async ls(is_totp: boolean) {
+  async list(totp: boolean) {
     const entries = await this.query("ls", ["-R", "-f"]);
     for (const entry of entries.sort()) {
-      if (entry.endsWith(is_group)) {
+      if (entry.endsWith(GROUP_SEPARATOR)) {
         continue;
       }
-      const is_totp_entry = entry.endsWith(totp_tokens);
-      if (is_totp) {
-        if (!is_totp_entry) {
+      const totpEntry = entry.endsWith(TOTP_TOKEN);
+      if (totp) {
+        if (!totpEntry) {
           continue;
         }
       } else {
-        if (is_totp_entry) {
+        if (totpEntry) {
           continue;
         }
       }
       console.log(entry);
     }
   }
-  async get_entry(
-    is_clip: boolean,
-    is_totp: boolean,
+  private async entry(
+    clip: boolean,
+    totp: boolean,
     entry: string,
   ): Promise<Array<string>> {
-    if (entry.endsWith(is_group)) {
+    if (entry.endsWith(GROUP_SEPARATOR)) {
       console.log("invalid entry, group detected");
       Deno.exit(1);
     }
     const args: Array<string> = ["--show-protected"];
-    if (is_totp) {
+    if (totp) {
       args.push("--totp");
     }
     const allowed: Array<string> = ["Password"];
-    if (!is_clip) {
+    if (!clip) {
       allowed.push("Notes");
     }
     for (const allow of allowed) {
-      const try_args = args.concat(["--attributes", allow, entry]);
-      const val = await this.query("show", try_args);
+      const tryArgs = args.concat(["--attributes", allow, entry]);
+      const val = await this.query("show", tryArgs);
       if (val.length > 0) {
         return val;
       }
@@ -219,17 +213,17 @@ class Config {
     console.log("unable to find entry");
     Deno.exit(1);
   }
-  async output(val: string, is_clip: boolean) {
-    if (!is_clip) {
+  private async output(val: string, clip: boolean) {
+    if (!clip) {
       console.log(val);
       return;
     }
     console.log(`clipboard will clear in ${this.clip} (seconds)`);
     const encoded = new TextEncoder().encode(val);
-    await stdin_stdout_command(encoded, "pbcopy", []);
-    const hash = await hash_value(encoded);
-    const command = new Deno.Command(executable, {
-      args: [pb_command, hash],
+    await inOutCommand(encoded, "pbcopy", []);
+    const hash = await hashValue(encoded);
+    const command = new Deno.Command(EXECUTABLE, {
+      args: [CLEAR_COMMAND, hash],
       stdout: "inherit",
       stderr: "inherit",
     });
@@ -237,20 +231,20 @@ class Config {
     child.unref();
     Deno.exit(0);
   }
-  async show_clip(is_clip: boolean, entry: string) {
-    if (entry.endsWith(totp_tokens)) {
+  async showClip(clip: boolean, entry: string) {
+    if (entry.endsWith(TOTP_TOKEN)) {
       console.log("invalid entry, is totp token");
       Deno.exit(1);
     }
-    const val = await this.get_entry(is_clip, false, entry);
-    this.output(val[0].trim(), is_clip);
+    const val = await this.entry(clip, false, entry);
+    this.output(val[0].trim(), clip);
   }
-  async totp(is_clip: boolean, entry: string) {
-    if (!entry.endsWith(totp_tokens)) {
+  async totp(clip: boolean, entry: string) {
+    if (!entry.endsWith(TOTP_TOKEN)) {
       console.log("invalid entry, is not totp");
       Deno.exit(1);
     }
-    const val = await this.get_entry(is_clip, true, entry);
+    const val = await this.entry(clip, true, entry);
     val.forEach((v) => {
       const trimmed = v.trim();
       let valid = false;
@@ -279,11 +273,11 @@ class Config {
           display = red(display);
         }
         console.log(`expires at: ${time} ${display}`);
-        if (!is_clip) {
+        if (!clip) {
           console.log();
         }
-        this.output(trimmed, is_clip);
-        if (!is_clip) {
+        this.output(trimmed, clip);
+        if (!clip) {
           console.log();
         }
         return;
@@ -313,7 +307,7 @@ class Config {
       for (const item of ["Password", "TOTP", "Notes"]) {
         hashing.push((record[item] as string).trim());
       }
-      const hashed = await hash_value(
+      const hashed = await hashValue(
         new TextEncoder().encode(hashing.join("")),
       );
       const obj = new Map<string, string>();
@@ -331,7 +325,7 @@ class Config {
   }
 }
 
-async function hash_value(value: Uint8Array): Promise<string> {
+async function hashValue(value: Uint8Array): Promise<string> {
   const buffer = await crypto.subtle.digest(
     "SHA-256",
     value,
@@ -369,21 +363,21 @@ export async function lockbox(args: Array<string>) {
     opts["sync"],
   );
   switch (command) {
-    case totp_command: {
+    case TOTP_COMMAND: {
       if (args.length < 2) {
         console.log("invalid totp arguments");
         Deno.exit(1);
       }
       const sub = args[1];
       switch (sub) {
-        case list_command:
-          require_args(args, 2);
-          await cfg.ls(true);
+        case LIST_COMMAND:
+          requireArgs(args, 2);
+          await cfg.list(true);
           break;
-        case show_command:
-        case clip_command:
-          require_args(args, 3);
-          await cfg.totp(sub === clip_command, args[2]);
+        case SHOW_COMMAND:
+        case CLIP_COMMAND:
+          requireArgs(args, 3);
+          await cfg.totp(sub === CLIP_COMMAND, args[2]);
           break;
         default:
           console.log("unknown totp command");
@@ -392,29 +386,29 @@ export async function lockbox(args: Array<string>) {
       break;
     }
     case "init":
-      require_args(args, 1);
+      requireArgs(args, 1);
       cfg.initialize();
       break;
     case "--bash":
-      require_args(args, 1);
-      console.log(bash_completion);
+      requireArgs(args, 1);
+      console.log(BASH_COMPLETION);
       break;
     case "conv":
-      require_args(args, 2);
+      requireArgs(args, 2);
       await cfg.convert(args[1]);
       break;
-    case pb_command:
-      require_args(args, 2);
-      await cfg.clear_clipboard(args[1], 0);
+    case CLEAR_COMMAND:
+      requireArgs(args, 2);
+      await cfg.clearClipboard(args[1], 0);
       break;
-    case list_command:
-      require_args(args, 1);
-      await cfg.ls(false);
+    case LIST_COMMAND:
+      requireArgs(args, 1);
+      await cfg.list(false);
       break;
-    case clip_command:
-    case show_command: {
-      require_args(args, 2);
-      await cfg.show_clip(command === clip_command, args[1]);
+    case CLIP_COMMAND:
+    case SHOW_COMMAND: {
+      requireArgs(args, 2);
+      await cfg.showClip(command === CLIP_COMMAND, args[1]);
       break;
     }
     default:
@@ -423,7 +417,7 @@ export async function lockbox(args: Array<string>) {
   }
 }
 
-function require_args(args: Array<string>, count: number) {
+function requireArgs(args: Array<string>, count: number) {
   if (args.length !== count) {
     console.log("invalid arguments passed");
     Deno.exit(1);

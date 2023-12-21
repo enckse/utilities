@@ -37,7 +37,7 @@ class Git {
     return this;
   }
   private toCommand(dir: string): Array<string> {
-    return ["-C", dir].concat(this.args);
+    return ["-C", dir, ...this.args];
   }
   private check(dir: string, output: string): Result {
     let res = output !== "";
