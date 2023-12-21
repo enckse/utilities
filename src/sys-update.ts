@@ -1,5 +1,5 @@
-import { basename, join } from "https://deno.land/std/path/mod.ts";
-import { existsSync, moveSync } from "https://deno.land/std/fs/mod.ts";
+import { basename, join } from "std/path/mod.ts";
+import { existsSync, moveSync } from "std/fs/mod.ts";
 
 export function sync() {
   const home = Deno.env.get("HOME");

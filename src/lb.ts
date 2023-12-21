@@ -1,9 +1,9 @@
-import { join } from "https://deno.land/std/path/mod.ts";
-import { format } from "https://deno.land/std/datetime/mod.ts";
-import { existsSync } from "https://deno.land/std/fs/mod.ts";
-import { encodeHex } from "https://deno.land/std/encoding/hex.ts";
-import { parse } from "https://deno.land/std/csv/mod.ts";
-import { red } from "https://deno.land/std/fmt/colors.ts";
+import { join } from "std/path/mod.ts";
+import { format } from "std/datetime/mod.ts";
+import { existsSync } from "std/fs/mod.ts";
+import { encodeHex } from "std/encoding/hex.ts";
+import { parse } from "std/csv/mod.ts";
+import { red } from "std/fmt/colors.ts";
 
 const list_command = "ls";
 const show_command = "show";

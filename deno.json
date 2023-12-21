@@ -1,5 +1,9 @@
 {
+  "imports": {
+      "std/": "https://deno.land/std@0.210.0/"
+  },
   "tasks": {
-    "compile": "deno compile --allow-env --allow-read --allow-run --allow-write -o build/utility-wrapper src/main.ts"
+    "compile": "deno compile --allow-env --allow-read --allow-run --allow-write -o build/utility-wrapper src/main.ts",
+    "cache": "deno cache --lock=deno.lock --lock-write src/main.ts"
   }
 }

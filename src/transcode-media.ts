@@ -1,7 +1,7 @@
-import { extname } from "https://deno.land/std/path/mod.ts";
-import { format } from "https://deno.land/std/datetime/mod.ts";
-import { existsSync } from "https://deno.land/std/fs/mod.ts";
-import { encodeHex } from "https://deno.land/std/encoding/hex.ts";
+import { extname } from "std/path/mod.ts";
+import { format } from "std/datetime/mod.ts";
+import { existsSync } from "std/fs/mod.ts";
+import { encodeHex } from "std/encoding/hex.ts";
 
 const mov_file = ".mov";
 const heic_file = ".heic";

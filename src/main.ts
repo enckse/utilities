@@ -1,5 +1,5 @@
 import { version } from "./generated.ts";
-import { join } from "https://deno.land/std/path/mod.ts";
+import { join } from "std/path/mod.ts";
 import { transcode } from "./transcode-media.ts";
 import { uncommit } from "./git-uncommitted.ts";
 import { oclone } from "./git-oclone.ts";

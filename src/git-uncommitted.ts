@@ -1,6 +1,6 @@
-import { join } from "https://deno.land/std/path/mod.ts";
-import { existsSync } from "https://deno.land/std/fs/mod.ts";
-import { red, yellow } from "https://deno.land/std/fmt/colors.ts";
+import { join } from "std/path/mod.ts";
+import { existsSync } from "std/fs/mod.ts";
+import { red, yellow } from "std/fmt/colors.ts";
 
 class Result {
   private matched: boolean;

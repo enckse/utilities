@@ -1,5 +1,5 @@
-import { join } from "https://deno.land/std/path/mod.ts";
-import { existsSync } from "https://deno.land/std/fs/mod.ts";
+import { join } from "std/path/mod.ts";
+import { existsSync } from "std/fs/mod.ts";
 
 const locals = "localhost";
 const separator = "/";
