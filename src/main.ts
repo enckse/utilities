@@ -6,28 +6,18 @@ import { oclone } from "./git-oclone.ts";
 import { sync } from "./sys-update.ts";
 import { lockbox } from "./lb.ts";
 
-type commandable = (args: Array<string>) => void;
-
-const commands: Map<string, commandable> = new Map<string, commandable>();
-commands.set("version", (_: Array<string>) => {
-  version();
-});
-commands.set(
-  "transcode-media",
-  (_: Array<string>) => {
+const COMMANDS = {
+  "transcode-media": (_: Array<string>) => {
     transcode();
   },
-);
-commands.set(
-  "git-oclone",
-  oclone,
-);
-commands.set("git-uncommitted", uncommit);
-commands.set("lb", lockbox);
-commands.set("sys-update", (_: Array<string>) => {
-  sync();
-});
-const executable = "utility-wrapper";
+  "git-oclone": oclone,
+  "git-uncommitted": uncommit,
+  "lb": lockbox,
+  "sys-update": (_: Array<string>) => {
+    sync();
+  },
+};
+const EXECUTABLE = "utility-wrapper";
 
 function main() {
   if (Deno.args.length === 0) {
@@ -45,22 +35,26 @@ function main() {
       args.push(arg);
     }
   }
-  const cmd = commands.get(command);
-  if (cmd !== undefined) {
-    cmd(args);
-    return;
+  for (const [k, v] of Object.entries(COMMANDS)) {
+    if (k === command) {
+      v(args);
+      return;
+    }
   }
   switch (command) {
+    case "version":
+      version();
+      break;
     case "generate": {
       if (args.length !== 1) {
         console.log("target required");
         Deno.exit(1);
       }
       const target = args[0];
-      for (const command of commands.keys()) {
+      for (const command of Object.getOwnPropertyNames(COMMANDS)) {
         Deno.writeTextFileSync(
           join(target, command),
-          `#!/usr/bin/env bash\nexec ${executable} ${command} $@`,
+          `#!/usr/bin/env bash\nexec ${EXECUTABLE} ${command} $@`,
           {
             mode: 0o755,
           },

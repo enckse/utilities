@@ -3,16 +3,11 @@ import { existsSync } from "std/fs/mod.ts";
 import { red, yellow } from "std/fmt/colors.ts";
 
 class Result {
-  private matched: boolean;
-  private sub: string;
-  private dir: string;
-  constructor(has: boolean, sub: string, dir: string) {
-    this.matched = has;
-    this.sub = sub;
-    this.dir = dir;
-  }
-  get has(): boolean {
-    return this.matched;
+  constructor(
+    readonly has: boolean,
+    private readonly sub: string,
+    private readonly dir: string,
+  ) {
   }
   quick(early: boolean) {
     if (!early) {
@@ -29,14 +24,11 @@ class Result {
 }
 
 class Git {
-  private sub: string;
   private args: Array<string>;
-  private filter: string | undefined;
+  private filter?: string;
   private negate: boolean;
-  constructor(subCommand: string, args: Array<string>) {
-    this.sub = subCommand;
-    this.args = [subCommand].concat(args);
-    this.filter = undefined;
+  constructor(private readonly sub: string, args: Array<string>) {
+    this.args = [sub, ...args];
     this.negate = false;
   }
   setFilter(filter: string, negate: boolean): Git {
@@ -44,10 +36,10 @@ class Git {
     this.negate = negate;
     return this;
   }
-  toCommand(dir: string): Array<string> {
+  private toCommand(dir: string): Array<string> {
     return ["-C", dir].concat(this.args);
   }
-  check(dir: string, output: string): Result {
+  private check(dir: string, output: string): Result {
     let res = output !== "";
     if (this.filter !== undefined) {
       const matched = new RegExp(this.filter).test(output);

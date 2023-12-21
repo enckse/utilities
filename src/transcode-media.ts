@@ -3,10 +3,10 @@ import { format } from "std/datetime/mod.ts";
 import { existsSync } from "std/fs/mod.ts";
 import { encodeHex } from "std/encoding/hex.ts";
 
-const mov_file = ".mov";
-const heic_file = ".heic";
-const name_arg = "{NAME}";
-const in_arg = "{INPUT}";
+const MOV_FILE = ".mov";
+const HEIC_FILE = ".heic";
+const NAME_ARG = "{NAME}";
+const IN_ARG = "{INPUT}";
 
 export async function transcode() {
   let fail = 0;
@@ -17,15 +17,15 @@ export async function transcode() {
     let command = "";
     let args: Array<string> = [];
     switch (ext) {
-      case heic_file:
+      case HEIC_FILE:
         target = "jpeg";
         command = "sips";
-        args = ["--setProperty", "format", "jpeg", "--out", name_arg, in_arg];
+        args = ["--setProperty", "format", "jpeg", "--out", NAME_ARG, IN_ARG];
         break;
-      case mov_file:
+      case MOV_FILE:
         target = "mp4";
         command = "avconvert";
-        args = ["-s", in_arg, "-o", name_arg, "-p", "PresetHEVCHighestQuality"];
+        args = ["-s", IN_ARG, "-o", NAME_ARG, "-p", "PresetHEVCHighestQuality"];
         break;
       default:
         continue;
@@ -54,10 +54,10 @@ export async function transcode() {
     const subbed: Array<string> = [];
     args.forEach((a) => {
       switch (a) {
-        case name_arg:
+        case NAME_ARG:
           subbed.push(name);
           break;
-        case in_arg:
+        case IN_ARG:
           subbed.push(file.name);
           break;
         default:
