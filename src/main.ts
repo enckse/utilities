@@ -9,6 +9,9 @@ import { lockbox } from "./lb.ts";
 type commandable = (args: Array<string>) => void;
 
 const commands: Map<string, commandable> = new Map<string, commandable>();
+commands.set("version", (_: Array<string>) => {
+  version();
+});
 commands.set(
   "transcode-media",
   (_: Array<string>) => {
@@ -41,9 +44,6 @@ function main() {
     } else {
       args.push(arg);
     }
-  }
-  if (command === "--version") {
-    version();
   }
   const cmd = commands.get(command);
   if (cmd !== undefined) {
