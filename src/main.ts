@@ -1,9 +1,9 @@
 import { version } from "./generated.ts";
 import { join } from "std/path/mod.ts";
-import { transcode } from "./transcode-media.ts";
-import { uncommit } from "./git-uncommitted.ts";
-import { oclone } from "./git-oclone.ts";
-import { sync } from "./sys-update.ts";
+import { transcode } from "./transcode.ts";
+import { uncommit } from "./uncommitted.ts";
+import { oclone } from "./oclone.ts";
+import { sync } from "./sync.ts";
 import { lockbox } from "./lb.ts";
 
 const COMMANDS = {
