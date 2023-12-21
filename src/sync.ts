@@ -19,22 +19,22 @@ export function sync() {
       Deno.exit(1);
     }
   }
-  const brew_config = join(tasks, "brew");
-  if (!existsSync(brew_config)) {
-    Deno.mkdir(brew_config);
+  const brewConfig = join(tasks, "brew");
+  if (!existsSync(brewConfig)) {
+    Deno.mkdir(brewConfig);
   }
-  const brew_config_file = join(brew_config, "Brewfile");
-  if (existsSync(brew_config_file)) {
-    Deno.removeSync(brew_config_file);
+  const brewConfigFile = join(brewConfig, "Brewfile");
+  if (existsSync(brewConfigFile)) {
+    Deno.removeSync(brewConfigFile);
   }
-  if (!command("brew", ["bundle", "dump"], brew_config)) {
+  if (!command("brew", ["bundle", "dump"], brewConfig)) {
     console.log("failed to dump brew information");
     Deno.exit(1);
   }
   const config = join(home, ".config");
-  const config_file = join(config, "voidedtech", "upstreams.json");
+  const configFile = join(config, "voidedtech", "upstreams.json");
   const packs = join(config, "nvim", "pack", "plugins", "start");
-  const data = new TextDecoder().decode(Deno.readFileSync(config_file));
+  const data = new TextDecoder().decode(Deno.readFileSync(configFile));
   const cfg = JSON.parse(data);
   for (const plugin of cfg["neovim"]) {
     const base = basename(plugin);
@@ -64,8 +64,8 @@ export function sync() {
     }
     console.log();
   }
-  const repo_state = join(home, ".local", "state", "repos.current");
-  const new_state = `${repo_state}.new`;
+  const repoState = join(home, ".local", "state", "repos.current");
+  const newState = `${repoState}.new`;
   const items: Array<string> = [];
   for (const app of cfg["apps"]) {
     console.log(`=> getting state: ${app}`);
@@ -85,15 +85,15 @@ export function sync() {
       items.push(`${app}: ${line}`);
     }
   }
-  Deno.writeTextFileSync(new_state, items.join("\n"));
-  if (!existsSync(repo_state)) {
-    Deno.writeTextFileSync(repo_state, "");
+  Deno.writeTextFileSync(newState, items.join("\n"));
+  if (!existsSync(repoState)) {
+    Deno.writeTextFileSync(repoState, "");
   }
-  if (!command("diff", [repo_state, new_state], undefined)) {
+  if (!command("diff", [repoState, newState], undefined)) {
     console.log("===\napplication update detected\n===");
   }
 
-  moveSync(new_state, repo_state, {
+  moveSync(newState, repoState, {
     overwrite: true,
   });
 }

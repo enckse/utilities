@@ -60,17 +60,8 @@ export function oclone(args: Array<string>) {
   if (!existsSync(cacheDir)) {
     Deno.mkdirSync(cacheDir);
   }
-  let is_first = true;
-  let first = "";
-  const options: Array<string> = ["clone"];
-  for (const opt of args) {
-    if (is_first) {
-      first = opt;
-      is_first = false;
-    } else {
-      options.push(opt);
-    }
-  }
+  let first = args[0];
+  const options: Array<string> = ["clone", ...args.slice(1)];
   switch (first) {
     case LIST_CMD:
       if (args.length !== 1) {
@@ -91,14 +82,14 @@ _git_oclone() {
 }`);
       return;
   }
-  let is_local = false;
+  let isLocal = false;
   for (const suffix of ["", ".git"]) {
     if (existsSync(join(repos, `${first}${suffix}`))) {
-      is_local = true;
+      isLocal = true;
       break;
     }
   }
-  if (is_local) {
+  if (isLocal) {
     first = `${LOCALS}${GIT_ALIAS}${first}`;
   }
   options.push(first);
