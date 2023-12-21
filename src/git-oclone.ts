@@ -1,10 +1,10 @@
 import { join } from "std/path/mod.ts";
 import { existsSync } from "std/fs/mod.ts";
 
-const locals = "localhost";
-const separator = "/";
-const git_alias = ":";
-const list_cmd = "--list";
+const LOCALS = "localhost";
+const SEPARATOR = "/";
+const GIT_ALIAS = ":";
+const LIST_CMD = "--list";
 
 function list(cache: string, repo_dir: string) {
   const proc = new Deno.Command("git", {
@@ -17,14 +17,14 @@ function list(cache: string, repo_dir: string) {
     if (line.indexOf("insteadof") < 0) {
       continue;
     }
-    if (line.indexOf(locals) >= 0) {
+    if (line.indexOf(LOCALS) >= 0) {
       continue;
     }
     options.push(line.split("=")[1]);
   }
   if (existsSync(repo_dir)) {
     for (const dir of Deno.readDirSync(repo_dir)) {
-      options.push(dir.name + separator);
+      options.push(dir.name + SEPARATOR);
     }
   }
   if (existsSync(cache)) {
@@ -32,11 +32,11 @@ function list(cache: string, repo_dir: string) {
       const line of new TextDecoder().decode(Deno.readFileSync(cache)).trim()
         .split("\n")
     ) {
-      options.push(line.replace(`${locals}:`, ""));
+      options.push(line.replace(`${LOCALS}:`, ""));
     }
   }
   options.sort().forEach((o) => {
-    console.log(o.replace(git_alias, separator));
+    console.log(o.replace(GIT_ALIAS, SEPARATOR));
   });
 }
 
@@ -50,15 +50,15 @@ export function oclone(args: Array<string>) {
     console.log("HOME is not set");
     return;
   }
-  const cache_dir = join(home, ".local", "state");
-  const cache_file = join(cache_dir, "oclone.hst");
+  const cacheDir = join(home, ".local", "state");
+  const cacheFile = join(cacheDir, "oclone.hst");
   const repos = Deno.env.get("GIT_SOURCES");
   if (repos === undefined) {
     console.log("GIT_SOURCES is not set");
     return;
   }
-  if (!existsSync(cache_dir)) {
-    Deno.mkdirSync(cache_dir);
+  if (!existsSync(cacheDir)) {
+    Deno.mkdirSync(cacheDir);
   }
   let is_first = true;
   let first = "";
@@ -72,12 +72,12 @@ export function oclone(args: Array<string>) {
     }
   }
   switch (first) {
-    case list_cmd:
+    case LIST_CMD:
       if (args.length !== 1) {
         console.log("invalid list request");
         Deno.exit(1);
       }
-      list(cache_file, repos);
+      list(cacheFile, repos);
       return;
     case "--bash":
       console.log(`#!/usr/bin/env bash
@@ -85,7 +85,7 @@ _git_oclone() {
   local cur opts
   if [ "$COMP_CWORD" -eq 2 ]; then
     cur=\${COMP_WORDS[COMP_CWORD]}
-    opts=$(git oclone ${list_cmd})
+    opts=$(git oclone ${LIST_CMD})
     COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
   fi
 }`);
@@ -99,7 +99,7 @@ _git_oclone() {
     }
   }
   if (is_local) {
-    first = `${locals}${git_alias}${first}`;
+    first = `${LOCALS}${GIT_ALIAS}${first}`;
   }
   options.push(first);
   const proc = new Deno.Command("git", {
@@ -110,7 +110,7 @@ _git_oclone() {
   if (proc.outputSync().code !== 0) {
     Deno.exit(1);
   }
-  Deno.writeTextFile(cache_file, first, { append: true });
-  new Deno.Command("sort", { args: ["-u", "-o", cache_file, cache_file] })
+  Deno.writeTextFile(cacheFile, first, { append: true });
+  new Deno.Command("sort", { args: ["-u", "-o", cacheFile, cacheFile] })
     .spawn();
 }
