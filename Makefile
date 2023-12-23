@@ -1,17 +1,19 @@
 BUILD   := build/
 OBJECT  := $(BUILD)utility-wrapper
-VERSION := $(shell sha256sum src/*.ts | grep -v "generate" | cut -d " " -f 1 | sha256sum | cut -d " " -f 1 | cut -c 1-7)
+VERSION := $(shell date +%Y%m%d%H%M%S)
 DESTDIR := /usr/local/bin
+GEN     := src/generated.ts
 
 all: $(OBJECT)
 
 clean:
 	rm -rf $(BUILD)
+	rm -f $(GEN)
 
-src/generated.ts: $(shell ls src/*.ts | grep -v generate)
+$(GEN): $(shell ls src/*.ts | grep -v generate)
 	cat src/generate.template.ts | sed "s/VERSION/$(VERSION)/g" > src/generated.ts
 
-$(OBJECT): src/*.ts src/generated.ts
+$(OBJECT): src/*.ts $(GEN)
 	deno task compile
 
 install:
