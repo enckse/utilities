@@ -37,8 +37,7 @@ async function run(args: Array<string>): Promise<boolean> {
     console.log("HOME not set");
     return false;
   }
-  //const config = join(home, ".config", "voidedtech", "sds.json");
-  const config = join(home, "Workspace", "utilities", "sds.json");
+  const config = join(home, ".config", "voidedtech", "sds.json");
   if (!existsSync(config)) {
     console.log("config file does not exist");
     return false;
