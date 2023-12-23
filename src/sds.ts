@@ -104,7 +104,7 @@ function since(days: number, store: string, name: string): boolean {
     console.log("not an sds store");
     return false;
   }
-  const cutoff = new Date().getTime() - (days * 864000000);
+  const cutoff = new Date().getTime() - (days * 86400000);
   const results: Map<string, Array<string>> = new Map<string, Array<string>>();
   for (const dir of Deno.readDirSync(path)) {
     if (dir.isDirectory) {
