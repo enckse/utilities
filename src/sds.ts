@@ -47,7 +47,6 @@ async function run(args: Array<string>): Promise<boolean> {
   const bundles = cfg["bundles"];
   const store = cfg["store"];
   const cache = cfg["cache"];
-  const rsyncArgs = cfg["rsync"];
   if (!existsSync(store)) {
     console.log("store does not eixst");
     return false;
@@ -86,7 +85,6 @@ async function run(args: Array<string>): Promise<boolean> {
         requireArg(args),
         bundles,
         cache,
-        rsyncArgs,
         command === "checkout",
       );
     }
@@ -176,7 +174,6 @@ async function sync(
   name: string,
   bundles: string,
   cache: string,
-  rsyncArgs: Array<string>,
   isCheckout: boolean,
 ): Promise<boolean> {
   const storeTo = join(store, name);
@@ -250,7 +247,11 @@ async function sync(
     }
   }
   const rsync = new Deno.Command("rsync", {
-    args: [...rsyncArgs, `${from}${SEP}`, to],
+    args: [
+      ...debugFlags(["-ac", "--delete-after"], "RSYNC"),
+      `${from}${SEP}`,
+      to,
+    ],
     stdout: "inherit",
     stderr: "inherit",
   });
@@ -270,7 +271,7 @@ async function sync(
   console.log("bundling");
   const newBundle = `${bundle}.tmp`;
   const tar = new Deno.Command("tar", {
-    args: ["czf", newBundle, "-C", dataDir, "."],
+    args: [...debugFlags(["czf"], "TAR"), newBundle, "-C", dataDir, "."],
     stdout: "inherit",
     stderr: "inherit",
   });
@@ -287,6 +288,17 @@ async function sync(
   moveSync(newBundle, bundle);
 
   return true;
+}
+
+function debugFlags(defaults: Array<string>, key: string): Array<string> {
+  let val = Deno.env.get(`SDS_${key}`);
+  if (val !== undefined) {
+    val = val.trim();
+    if (val !== "") {
+      return val.split(" ");
+    }
+  }
+  return defaults;
 }
 
 function alphaNumeric(name: string): string {
