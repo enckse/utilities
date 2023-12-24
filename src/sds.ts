@@ -137,6 +137,9 @@ function* findDateDirs(path: string, range: Array<string>) {
 function printDiff(name: string, dirs: Iterable<string>) {
   const results: Map<string, Array<string>> = new Map<string, Array<string>>();
   for (const dir of dirs) {
+    if (!existsSync(dir)) {
+      continue;
+    }
     for (const files of Deno.readDirSync(dir)) {
       if (!files.isFile) {
         continue;
