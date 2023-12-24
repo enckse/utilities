@@ -1,7 +1,7 @@
 import { join } from "std/path/mod.ts";
 import { SEP } from "std/path/separator.ts";
 import { existsSync, moveSync, walkSync } from "std/fs/mod.ts";
-import { format, MINUTE } from "std/datetime/mod.ts";
+import { format } from "std/datetime/mod.ts";
 import { encodeHex } from "std/encoding/hex.ts";
 
 const WORK_DIR = "build";
@@ -11,10 +11,11 @@ const DATA_DIR = "data";
 const ADDED_DIFF = "+";
 const MINUS_DIFF = "-";
 const BOTH_DIFF = "*";
+const DATE_FMT = "yyyy.MM.dd";
 
 function commitDir(target: string): string | undefined {
   const now = new Date();
-  const time = format(now, "yyyy.MM.dd.HH.mm.ss");
+  const time = format(now, `${DATE_FMT}.HH.mm.ss`);
   let idx = 0;
   while (true) {
     if (idx > 9) {
@@ -112,7 +113,7 @@ function since(days: number, store: string, name: string): boolean {
     idx--;
     const day = now.getTime() - (idx * 86400000);
     range.push(
-      format(new Date(day), "yyyy.MM.dd"),
+      format(new Date(day), DATE_FMT),
     );
   }
   printDiff(name, findDateDirs(path, range));
@@ -123,12 +124,10 @@ function* findDateDirs(path: string, range: Array<string>) {
   for (const dir of Deno.readDirSync(path)) {
     if (dir.isDirectory) {
       const dir_name = join(path, dir.name);
-      const stats = Deno.statSync(dir_name);
-      if (
-        stats.mtime !== null &&
-        range.indexOf(format(stats.mtime, "yyyy.MM.dd")) >= 0
-      ) {
-        yield dir_name;
+      for (const r of range) {
+        if (dir.name.startsWith(r)) {
+          yield dir_name;
+        }
       }
     }
   }
