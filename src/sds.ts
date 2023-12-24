@@ -10,7 +10,7 @@ const SDS_DIR = ".sds";
 const DATA_DIR = "data";
 const ADDED_DIFF = "+";
 const MINUS_DIFF = "-";
-const BOTH_DIFF = "+/-";
+const BOTH_DIFF = "*";
 
 function commitDir(target: string): string | undefined {
   const now = new Date();
@@ -112,10 +112,24 @@ function since(days: number, store: string, name: string): boolean {
       const dir_name = join(path, dir.name);
       const stats = Deno.statSync(dir_name);
       if (stats.mtime !== null && stats.mtime.getTime() > cutoff) {
-        const files = join(dir_name, FILE_META);
-        if (existsSync(files)) {
-          for (const line of Deno.readTextFileSync(files).split("\n")) {
+        for (const files of Deno.readDirSync(dir_name)) {
+          if (!files.isFile) {
+            continue;
+          }
+          const isMeta = files.name == FILE_META;
+          let isFirst = true;
+          for (
+            const line of Deno.readTextFileSync(join(dir_name, files.name))
+              .split("\n")
+          ) {
             const trim = line.trim();
+            if (isFirst) {
+              isFirst = false;
+            } else {
+              if (!isMeta) {
+                continue;
+              }
+            }
             if (trim.length === 0) {
               continue;
             }
