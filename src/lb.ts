@@ -84,6 +84,7 @@ class Config {
   private readonly command: string;
   private readonly command_args: Array<string>;
   private key?: Uint8Array;
+  private readonly inCommand: Array<string>;
   constructor(
     private readonly root: string,
     database: string,
@@ -97,10 +98,11 @@ class Config {
     this.keyfile = join(root, keyfile);
     this.command = key[0];
     this.command_args = key.slice(1);
+    this.inCommand = key;
   }
   env() {
     const exports = {
-      "KEY": [this.command, ...this.command_args].join(" "),
+      "KEY": this.inCommand.join(" "),
       "KEYFILE": this.keyfile,
     };
     for (const [key, val] of Object.entries(exports)) {
