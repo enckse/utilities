@@ -263,6 +263,7 @@ async function sync(
     if (
       await diffContents(
         true,
+        MINUS_DIFF,
         commit,
         dataDir,
         working,
@@ -275,6 +276,7 @@ async function sync(
     if (
       await diffContents(
         false,
+        ADDED_DIFF,
         commit,
         working,
         dataDir,
@@ -358,6 +360,7 @@ function alphaNumeric(name: string): string {
 
 async function diffContents(
   first: boolean,
+  prefix: string,
   commit: string,
   source: string,
   other: string,
@@ -380,7 +383,7 @@ async function diffContents(
     name = `${name}.${hash}`;
     name = join(commit, name);
     const sourceFile = join(source, file);
-    const header = `${BOTH_DIFF}${file}\n===\n`;
+    const header = `${file}\n===\n`;
     if (otherFiles.indexOf(file) >= 0) {
       if (first) {
         const otherFile = join(other, file);
@@ -392,12 +395,12 @@ async function diffContents(
         if (code !== 0) {
           differences = true;
           const out = new TextDecoder().decode(stdout);
-          Deno.writeTextFileSync(name, `${header}${out}`);
+          Deno.writeTextFileSync(name, `${BOTH_DIFF}${header}${out}`);
         }
       }
     } else {
       let raw = Deno.readTextFileSync(sourceFile);
-      raw = `${header}${raw}`;
+      raw = `${prefix}${header}${raw}`;
       Deno.writeTextFileSync(name, raw);
       differences = true;
     }
