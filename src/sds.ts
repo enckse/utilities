@@ -1,13 +1,16 @@
 import { join } from "std/path/mod.ts";
 import { SEP } from "std/path/separator.ts";
 import { existsSync, moveSync, walkSync } from "std/fs/mod.ts";
-import { format } from "std/datetime/mod.ts";
+import { format, MINUTE } from "std/datetime/mod.ts";
 import { encodeHex } from "std/encoding/hex.ts";
 
 const WORK_DIR = "build";
 const FILE_META = "files";
 const SDS_DIR = ".sds";
 const DATA_DIR = "data";
+const ADDED_DIFF = "+";
+const MINUS_DIFF = "-";
+const BOTH_DIFF = "+/-";
 
 function commitDir(target: string): string | undefined {
   const now = new Date();
@@ -135,7 +138,7 @@ function since(days: number, store: string, name: string): boolean {
   [...results.keys()].sort().map((key) => {
     const prefixes = results.get(key);
     if (prefixes !== undefined) {
-      let report = "+/-";
+      let report = BOTH_DIFF;
       if (prefixes.length === 1) {
         report = ` ${prefixes[0]} `;
       }
@@ -209,8 +212,8 @@ async function sync(
     const sourceFiles = [...loadFiles(dataDir)].sort();
     const workFiles = [...loadFiles(working)].sort();
     const fileDiff = [
-      ...diffList("-", sourceFiles, workFiles),
-      ...diffList("+", workFiles, sourceFiles),
+      ...diffList(MINUS_DIFF, sourceFiles, workFiles),
+      ...diffList(ADDED_DIFF, workFiles, sourceFiles),
     ];
     if (fileDiff.length > 0) {
       Deno.writeTextFileSync(join(commit, FILE_META), fileDiff.join("\n"));
@@ -219,7 +222,7 @@ async function sync(
     if (
       await diffContents(
         true,
-        "-",
+        MINUS_DIFF,
         commit,
         dataDir,
         working,
@@ -232,7 +235,7 @@ async function sync(
     if (
       await diffContents(
         false,
-        "+",
+        ADDED_DIFF,
         commit,
         working,
         dataDir,
