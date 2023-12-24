@@ -106,7 +106,7 @@ function since(days: number, store: string, name: string): boolean {
     return false;
   }
   const range: Array<string> = [];
-  let idx = days - 1;
+  let idx = days;
   const now = new Date();
   while (idx >= 0) {
     idx--;
