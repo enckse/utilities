@@ -105,50 +105,74 @@ function since(days: number, store: string, name: string): boolean {
     console.log("not an sds store");
     return false;
   }
-  const cutoff = new Date().getTime() - (days * 86400000);
-  const results: Map<string, Array<string>> = new Map<string, Array<string>>();
+  const range: Array<string> = [];
+  let idx = days - 1;
+  const now = new Date();
+  while (idx >= 0) {
+    idx--;
+    const day = now.getTime() - (idx * 86400000);
+    range.push(
+      format(new Date(day), "yyyy.MM.dd"),
+    );
+  }
+  printDiff(name, findDateDirs(path, range));
+  return true;
+}
+
+function* findDateDirs(path: string, range: Array<string>) {
   for (const dir of Deno.readDirSync(path)) {
     if (dir.isDirectory) {
       const dir_name = join(path, dir.name);
       const stats = Deno.statSync(dir_name);
-      if (stats.mtime !== null && stats.mtime.getTime() > cutoff) {
-        for (const files of Deno.readDirSync(dir_name)) {
-          if (!files.isFile) {
-            continue;
-          }
-          const isMeta = files.name == FILE_META;
-          let isFirst = true;
-          for (
-            const line of Deno.readTextFileSync(join(dir_name, files.name))
-              .split("\n")
-          ) {
-            const trim = line.trim();
-            if (isFirst) {
-              isFirst = false;
-            } else {
-              if (!isMeta) {
-                continue;
-              }
-            }
-            if (trim.length === 0) {
-              continue;
-            }
-            const prefix = trim[0];
-            const fileName = trim.slice(1);
-            let prefixes = results.get(fileName);
-            if (prefixes === undefined) {
-              prefixes = [prefix];
-            } else {
-              if (prefixes.indexOf(prefix) < 0) {
-                prefixes.push(prefix);
-              }
-            }
-            results.set(fileName, prefixes);
-          }
-        }
+      if (
+        stats.mtime !== null &&
+        range.indexOf(format(stats.mtime, "yyyy.MM.dd")) >= 0
+      ) {
+        yield dir_name;
       }
     }
   }
+}
+
+function printDiff(name: string, dirs: Iterable<string>) {
+  const results: Map<string, Array<string>> = new Map<string, Array<string>>();
+  for (const dir of dirs) {
+    for (const files of Deno.readDirSync(dir)) {
+      if (!files.isFile) {
+        continue;
+      }
+      const isMeta = files.name == FILE_META;
+      let isFirst = true;
+      for (
+        const line of Deno.readTextFileSync(join(dir, files.name))
+          .split("\n")
+      ) {
+        const trim = line.trim();
+        if (isFirst) {
+          isFirst = false;
+        } else {
+          if (!isMeta) {
+            continue;
+          }
+        }
+        if (trim.length === 0) {
+          continue;
+        }
+        const prefix = trim[0];
+        const fileName = trim.slice(1);
+        let prefixes = results.get(fileName);
+        if (prefixes === undefined) {
+          prefixes = [prefix];
+        } else {
+          if (prefixes.indexOf(prefix) < 0) {
+            prefixes.push(prefix);
+          }
+        }
+        results.set(fileName, prefixes);
+      }
+    }
+  }
+  console.log(`\n${name}\n-----\n`);
   [...results.keys()].sort().map((key) => {
     const prefixes = results.get(key);
     if (prefixes !== undefined) {
@@ -161,6 +185,7 @@ function since(days: number, store: string, name: string): boolean {
   }).sort().forEach((e) => {
     console.log(e);
   });
+  console.log();
   return true;
 }
 
@@ -262,6 +287,7 @@ async function sync(
     if ([...Deno.readDirSync(commit)].length === 0) {
       Deno.remove(commit);
     }
+    printDiff(name, [commit]);
   }
   const rsync = new Deno.Command("rsync", {
     args: [
