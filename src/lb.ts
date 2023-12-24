@@ -98,6 +98,15 @@ class Config {
     this.command = key[0];
     this.command_args = key.slice(1);
   }
+  env() {
+    const exports = {
+      "KEY": [this.command, ...this.command_args].join(" "),
+      "KEYFILE": this.keyfile,
+    };
+    for (const [key, val] of Object.entries(exports)) {
+      console.log(`export LB_${key}="${val}"`);
+    }
+  }
   initialize() {
     if (this.sync === undefined || this.sync === "") {
       return;
@@ -385,6 +394,9 @@ export async function lockbox(args: Array<string>) {
       }
       break;
     }
+    case "env":
+      cfg.env();
+      break;
     case "init":
       requireArgs(args, 1);
       cfg.initialize();
