@@ -351,7 +351,8 @@ async function diffContents(
         const { code, stdout } = command.outputSync();
         if (code !== 0) {
           differences = true;
-          Deno.writeFileSync(name, stdout);
+          const out = new TextDecoder().decode(stdout);
+          Deno.writeTextFileSync(name, `${BOTH_DIFF}\n===\n${out}`);
         }
       }
     } else {
