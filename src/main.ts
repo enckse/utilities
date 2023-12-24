@@ -5,7 +5,6 @@ import { uncommit } from "./uncommitted.ts";
 import { oclone } from "./oclone.ts";
 import { sync } from "./sync.ts";
 import { lockbox } from "./lb.ts";
-import { simpleDiffService } from "./sds.ts";
 
 const COMMANDS = {
   "transcode-media": (_: Array<string>) => {
@@ -13,7 +12,6 @@ const COMMANDS = {
   },
   "git-oclone": oclone,
   "git-uncommitted": uncommit,
-  "sds": simpleDiffService,
   "lb": lockbox,
   "sys-update": (_: Array<string>) => {
     sync();
