@@ -10,6 +10,7 @@ const SHOW_COMMAND = "show";
 const CLIP_COMMAND = "clip";
 const TOTP_COMMAND = "totp";
 const CLEAR_COMMAND = "clipboard";
+const SYNC_COMMAND = "sync";
 const TOTP_TOKEN = "/totp";
 const GROUP_SEPARATOR = "/";
 const EXECUTABLE = "lb";
@@ -23,6 +24,7 @@ _${EXECUTABLE}() {
     opts="\${opts}${SHOW_COMMAND} "
     opts="\${opts}${CLIP_COMMAND} "
     opts="\${opts}${TOTP_COMMAND} "
+    opts="\${opts}${SYNC_COMMAND} "
     # shellcheck disable=SC2207
     COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
   else
@@ -119,11 +121,20 @@ class Config {
     }
     Deno.writeTextFileSync(
       hook,
-      `#!/bin/sh\nrsync ${this.database} ${this.sync}`,
+      `#!/bin/sh\nexec ${EXECUTABLE} ${SYNC_COMMAND}`,
       {
         mode: 0o755,
       },
     );
+  }
+  synchronize() {
+    if (
+      new Deno.Command("rsync", { args: [this.database, this.sync] })
+        .outputSync().code !== 0
+    ) {
+      console.log("sync failed");
+      Deno.exit(1);
+    }
   }
   async clearClipboard(hash: string, count: number) {
     if (count === this.clip) {
@@ -425,6 +436,9 @@ export async function lockbox(args: Array<string>) {
       await cfg.showClip(command === CLIP_COMMAND, args[1]);
       break;
     }
+    case SYNC_COMMAND:
+      cfg.synchronize();
+      break;
     default:
       console.log("unknown command");
       Deno.exit(1);
