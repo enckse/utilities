@@ -129,7 +129,11 @@ class Config {
   }
   synchronize() {
     if (
-      new Deno.Command("rsync", { args: [this.database, this.sync] })
+      new Deno.Command("rsync", {
+        args: [this.database, this.sync],
+        stdout: "inherit",
+        stderr: "inherit",
+      })
         .outputSync().code !== 0
     ) {
       console.log("sync failed");
