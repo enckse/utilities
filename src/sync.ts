@@ -91,6 +91,9 @@ export function sync() {
   }
   if (!command("diff", [repoState, newState], undefined)) {
     console.log("===\napplication update detected\n===");
+    if (!confirm("update completed?")) {
+      return;
+    }
   }
 
   moveSync(newState, repoState, {
