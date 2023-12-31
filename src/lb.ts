@@ -10,7 +10,6 @@ const SHOW_COMMAND = "show";
 const CLIP_COMMAND = "clip";
 const TOTP_COMMAND = "totp";
 const CLEAR_COMMAND = "clipboard";
-const SYNC_COMMAND = "sync";
 const TOTP_TOKEN = "/totp";
 const GROUP_SEPARATOR = "/";
 const EXECUTABLE = "lb";
@@ -24,7 +23,6 @@ _${EXECUTABLE}() {
     opts="\${opts}${SHOW_COMMAND} "
     opts="\${opts}${CLIP_COMMAND} "
     opts="\${opts}${TOTP_COMMAND} "
-    opts="\${opts}${SYNC_COMMAND} "
     # shellcheck disable=SC2207
     COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
   else
@@ -88,13 +86,12 @@ class Config {
   private key?: Uint8Array;
   private readonly inCommand: Array<string>;
   constructor(
-    private readonly root: string,
+    root: string,
     database: string,
     key: Array<string>,
     keyfile: string,
     private readonly app: string,
     private readonly clip: number,
-    private readonly sync: string,
   ) {
     this.database = join(root, database);
     this.keyfile = join(root, keyfile);
@@ -106,38 +103,10 @@ class Config {
     const exports = {
       "KEY": this.inCommand.join(" "),
       "KEYFILE": this.keyfile,
+      "DATABASE": this.database,
     };
     for (const [key, val] of Object.entries(exports)) {
       console.log(`export LB_${key}="${val}"`);
-    }
-  }
-  initialize() {
-    if (this.sync === undefined || this.sync === "") {
-      return;
-    }
-    const hook = join(this.root, ".git", "hooks", "post-commit");
-    if (existsSync(hook)) {
-      Deno.removeSync(hook);
-    }
-    Deno.writeTextFileSync(
-      hook,
-      `#!/bin/sh\nexec ${EXECUTABLE} ${SYNC_COMMAND}`,
-      {
-        mode: 0o755,
-      },
-    );
-  }
-  synchronize() {
-    if (
-      new Deno.Command("rsync", {
-        args: [this.database, this.sync],
-        stdout: "inherit",
-        stderr: "inherit",
-      })
-        .outputSync().code !== 0
-    ) {
-      console.log("sync failed");
-      Deno.exit(1);
     }
   }
   async clearClipboard(hash: string, count: number) {
@@ -386,7 +355,6 @@ export async function lockbox(args: Array<string>) {
     store["keyfile"],
     opts["app"],
     opts["clipboard"],
-    opts["sync"],
   );
   switch (command) {
     case TOTP_COMMAND: {
@@ -414,10 +382,6 @@ export async function lockbox(args: Array<string>) {
     case "env":
       cfg.env();
       break;
-    case "init":
-      requireArgs(args, 1);
-      cfg.initialize();
-      break;
     case "--bash":
       requireArgs(args, 1);
       console.log(BASH_COMPLETION);
@@ -440,9 +404,6 @@ export async function lockbox(args: Array<string>) {
       await cfg.showClip(command === CLIP_COMMAND, args[1]);
       break;
     }
-    case SYNC_COMMAND:
-      cfg.synchronize();
-      break;
     default:
       console.log("unknown command");
       Deno.exit(1);
