@@ -1,6 +1,6 @@
 {
   "imports": {
-      "std/": "https://deno.land/std@0.210.0/"
+    "std/": "https://deno.land/std@0.210.0/"
   },
   "tasks": {
     "compile": "deno compile --allow-env --allow-read --allow-run --allow-write -o build/utility-wrapper src/main.ts",
