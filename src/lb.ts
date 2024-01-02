@@ -4,6 +4,7 @@ import { existsSync } from "std/fs/mod.ts";
 import { encodeHex } from "std/encoding/hex.ts";
 import { parse } from "std/csv/mod.ts";
 import { red } from "std/fmt/colors.ts";
+import { parse as parseConfig } from "std/yaml/mod.ts";
 
 const LIST_COMMAND = "ls";
 const SHOW_COMMAND = "show";
@@ -78,7 +79,24 @@ async function inOutCommand(
   return new TextDecoder().decode(result.stdout).trim();
 }
 
-class Config {
+interface StoreConfig {
+  root: string;
+  key: Array<string>;
+  keyfile: string;
+  database: string;
+}
+
+interface OptionsConfig {
+  app: string;
+  clipboard: number;
+}
+
+interface Config {
+  store: StoreConfig;
+  options: OptionsConfig;
+}
+
+class App {
   private readonly database: string;
   private readonly keyfile: string;
   private readonly command: string;
@@ -339,22 +357,20 @@ export async function lockbox(args: Array<string>) {
     console.log("HOME is not set");
     Deno.exit(1);
   }
-  const config = join(home, ".config", "voidedtech", "lb.json");
+  const config = join(home, ".config", "voidedtech", "lb.yaml");
   if (!existsSync(config)) {
     console.log("missing configuration file");
     Deno.exit(1);
   }
   const data = new TextDecoder().decode(Deno.readFileSync(config));
-  const json = JSON.parse(data.replaceAll("~", home));
-  const store = json["store"];
-  const opts = json["options"];
-  const cfg = new Config(
-    store["root"],
-    store["database"],
-    store["key"],
-    store["keyfile"],
-    opts["app"],
-    opts["clipboard"],
+  const yaml = parseConfig(data.replaceAll("~", home)) as Config;
+  const app = new App(
+    yaml.store.root,
+    yaml.store.database,
+    yaml.store.key,
+    yaml.store.keyfile,
+    yaml.options.app,
+    yaml.options.clipboard,
   );
   switch (command) {
     case TOTP_COMMAND: {
@@ -366,12 +382,12 @@ export async function lockbox(args: Array<string>) {
       switch (sub) {
         case LIST_COMMAND:
           requireArgs(args, 2);
-          await cfg.list(true);
+          await app.list(true);
           break;
         case SHOW_COMMAND:
         case CLIP_COMMAND:
           requireArgs(args, 3);
-          await cfg.totp(sub === CLIP_COMMAND, args[2]);
+          await app.totp(sub === CLIP_COMMAND, args[2]);
           break;
         default:
           console.log("unknown totp command");
@@ -380,7 +396,7 @@ export async function lockbox(args: Array<string>) {
       break;
     }
     case "env":
-      cfg.env();
+      app.env();
       break;
     case "--bash":
       requireArgs(args, 1);
@@ -388,20 +404,20 @@ export async function lockbox(args: Array<string>) {
       break;
     case "conv":
       requireArgs(args, 2);
-      await cfg.convert(args[1]);
+      await app.convert(args[1]);
       break;
     case CLEAR_COMMAND:
       requireArgs(args, 2);
-      await cfg.clearClipboard(args[1], 0);
+      await app.clearClipboard(args[1], 0);
       break;
     case LIST_COMMAND:
       requireArgs(args, 1);
-      await cfg.list(false);
+      await app.list(false);
       break;
     case CLIP_COMMAND:
     case SHOW_COMMAND: {
       requireArgs(args, 2);
-      await cfg.showClip(command === CLIP_COMMAND, args[1]);
+      await app.showClip(command === CLIP_COMMAND, args[1]);
       break;
     }
     default:

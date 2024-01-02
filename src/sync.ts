@@ -1,5 +1,11 @@
 import { basename, join } from "std/path/mod.ts";
 import { existsSync, moveSync } from "std/fs/mod.ts";
+import { parse as parseConfig } from "std/yaml/mod.ts";
+
+interface Config {
+  apps: string;
+  neovim: string;
+}
 
 export function sync() {
   const home = Deno.env.get("HOME");
@@ -32,11 +38,11 @@ export function sync() {
     Deno.exit(1);
   }
   const config = join(home, ".config");
-  const configFile = join(config, "voidedtech", "upstreams.json");
+  const configFile = join(config, "voidedtech", "upstreams.yaml");
   const packs = join(config, "nvim", "pack", "plugins", "start");
   const data = new TextDecoder().decode(Deno.readFileSync(configFile));
-  const cfg = JSON.parse(data);
-  for (const plugin of cfg["neovim"]) {
+  const cfg = parseConfig(data) as Config;
+  for (const plugin of cfg.neovim) {
     const base = basename(plugin);
     const dest = join(packs, base);
     let args: Array<string> = [
@@ -67,7 +73,7 @@ export function sync() {
   const repoState = join(home, ".local", "state", "repos.current");
   const newState = `${repoState}.new`;
   const items: Array<string> = [];
-  for (const app of cfg["apps"]) {
+  for (const app of cfg.apps) {
     console.log(`=> getting state: ${app}`);
     const proc = new Deno.Command("git", {
       args: ["ls-remote", "--tags", `https://github.com/${app}`],
