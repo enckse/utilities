@@ -1,4 +1,3 @@
-import { version } from "./generated.ts";
 import { join } from "std/path/mod.ts";
 import { transcode } from "./transcode.ts";
 import { uncommit } from "./uncommitted.ts";
@@ -42,19 +41,28 @@ function main() {
     }
   }
   switch (command) {
-    case "version":
-      version();
-      break;
     case "generate": {
       if (args.length !== 1) {
         console.log("target required");
+        Deno.exit(1);
+      }
+      const vers = Deno.env.get("VERSION");
+      if (vers === undefined) {
+        console.log("VERSION not set");
         Deno.exit(1);
       }
       const target = args[0];
       for (const command of Object.getOwnPropertyNames(COMMANDS)) {
         Deno.writeTextFileSync(
           join(target, command),
-          `#!/usr/bin/env bash\nexec ${EXECUTABLE} ${command} $@`,
+          `#!/usr/bin/env bash
+if [[ -n "$1" ]]; then
+  if [[ "$1" == "--version" ]]; then
+    echo "version: ${vers}"
+    exit 0
+  fi
+fi
+exec ${EXECUTABLE} ${command} $@`,
           {
             mode: 0o755,
           },
