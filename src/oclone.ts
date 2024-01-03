@@ -1,6 +1,6 @@
 import { join } from "std/path/mod.ts";
 import { existsSync } from "std/fs/mod.ts";
-import { getEnv, messageAndExitNonZero } from "./common.ts";
+import { BASH_ARG, getEnv, messageAndExitNonZero } from "./common.ts";
 
 const LOCALS = "localhost";
 const SEPARATOR = "/";
@@ -61,8 +61,13 @@ export function oclone(args: Array<string>) {
       }
       list(cacheFile, repos);
       return;
-    case "--bash":
-      console.log(`#!/usr/bin/env bash
+    case BASH_ARG:
+      if (args.length !== 2) {
+        messageAndExitNonZero("target file required");
+      }
+      Deno.writeTextFileSync(
+        args[1],
+        `#!/usr/bin/env bash
 _git_oclone() {
   local cur opts
   if [ "$COMP_CWORD" -eq 2 ]; then
@@ -70,7 +75,8 @@ _git_oclone() {
     opts=$(git oclone ${LIST_CMD})
     COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
   fi
-}`);
+}`,
+      );
       return;
   }
   let isLocal = false;

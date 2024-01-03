@@ -5,7 +5,7 @@ import { encodeHex } from "std/encoding/hex.ts";
 import { parse } from "std/csv/mod.ts";
 import { red } from "std/fmt/colors.ts";
 import { parse as parseConfig } from "std/yaml/mod.ts";
-import { getEnv, messageAndExitNonZero } from "./common.ts";
+import { BASH_ARG, getEnv, messageAndExitNonZero } from "./common.ts";
 
 const LIST_COMMAND = "ls";
 const SHOW_COMMAND = "show";
@@ -391,9 +391,9 @@ export async function lockbox(args: Array<string>) {
     case "env":
       app.env();
       break;
-    case "--bash":
-      requireArgs(args, 1);
-      console.log(BASH_COMPLETION);
+    case BASH_ARG:
+      requireArgs(args, 2);
+      Deno.writeTextFileSync(args[1], BASH_COMPLETION);
       break;
     case "conv":
       requireArgs(args, 2);

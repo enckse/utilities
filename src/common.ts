@@ -1,3 +1,4 @@
+export const BASH_ARG = "--bash";
 export function messageAndExitNonZero<T>(message?: string): Promise<T> {
   if (message !== undefined) {
     Deno.stderr.write(new TextEncoder().encode(message));
