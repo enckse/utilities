@@ -48,6 +48,9 @@ function main() {
         messageAndExitNonZero("directory required");
       }
       const target = args[0];
+      if (!existsSync(target)) {
+        Deno.mkdirSync(target);
+      }
       for (const key of COMPLETIONS) {
         const completion = join(target, key);
         if (existsSync(completion)) {
