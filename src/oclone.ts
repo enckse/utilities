@@ -1,5 +1,6 @@
 import { join } from "std/path/mod.ts";
 import { existsSync } from "std/fs/mod.ts";
+import { getEnv, messageAndExitNonZero } from "./common.ts";
 
 const LOCALS = "localhost";
 const SEPARATOR = "/";
@@ -42,21 +43,12 @@ function list(cache: string, repoDir: string) {
 
 export function oclone(args: Array<string>) {
   if (args.length === 0) {
-    console.log("argument required");
-    Deno.exit(1);
+    messageAndExitNonZero("argument required");
   }
-  const home = Deno.env.get("HOME");
-  if (home === undefined) {
-    console.log("HOME is not set");
-    return;
-  }
+  const home = getEnv("HOME");
   const cacheDir = join(home, ".local", "state");
   const cacheFile = join(cacheDir, "oclone.hst");
-  const repos = Deno.env.get("GIT_SOURCES");
-  if (repos === undefined) {
-    console.log("GIT_SOURCES is not set");
-    return;
-  }
+  const repos = getEnv("GIT_SOURCES");
   if (!existsSync(cacheDir)) {
     Deno.mkdirSync(cacheDir);
   }
@@ -65,8 +57,7 @@ export function oclone(args: Array<string>) {
   switch (first) {
     case LIST_CMD:
       if (args.length !== 1) {
-        console.log("invalid list request");
-        Deno.exit(1);
+        messageAndExitNonZero("invalid list request");
       }
       list(cacheFile, repos);
       return;

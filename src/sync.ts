@@ -1,6 +1,7 @@
 import { basename, join } from "std/path/mod.ts";
 import { existsSync, moveSync } from "std/fs/mod.ts";
 import { parse as parseConfig } from "std/yaml/mod.ts";
+import { getEnv, messageAndExitNonZero } from "./common.ts";
 
 interface Config {
   apps: string;
@@ -8,21 +9,14 @@ interface Config {
 }
 
 export function sync() {
-  const home = Deno.env.get("HOME");
-  if (home === undefined) {
-    console.log("HOME is not set");
-    Deno.exit(1);
-  }
-  const tasks = Deno.env.get("TASK_CACHE");
-  if (tasks === undefined) {
-    console.log("TASK_CACHE not set");
-    Deno.exit(1);
-  }
+  const home = getEnv("HOME");
+  const tasks = getEnv("TASK_CACHE");
   for (const sub of ["update", "upgrade"]) {
     console.log(`=> brew operation: ${sub}`);
     if (!command("brew", [sub], undefined)) {
-      console.log(`brew ${sub} failed`);
-      Deno.exit(1);
+      messageAndExitNonZero(
+        `brew ${sub} failed`,
+      );
     }
   }
   const brewConfig = join(tasks, "brew");
@@ -34,8 +28,7 @@ export function sync() {
     Deno.removeSync(brewConfigFile);
   }
   if (!command("brew", ["bundle", "dump"], brewConfig)) {
-    console.log("failed to dump brew information");
-    Deno.exit(1);
+    messageAndExitNonZero("failed to dump brew information");
   }
   const config = join(home, ".config");
   const configFile = join(config, "voidedtech", "upstreams.yaml");

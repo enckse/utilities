@@ -4,6 +4,7 @@ import { uncommit } from "./uncommitted.ts";
 import { oclone } from "./oclone.ts";
 import { sync } from "./sync.ts";
 import { lockbox } from "./lb.ts";
+import { getEnv, messageAndExitNonZero } from "./common.ts";
 
 const COMMANDS = {
   "transcode-media": (_: Array<string>) => {
@@ -20,8 +21,7 @@ const EXECUTABLE = "utility-wrapper";
 
 function main() {
   if (Deno.args.length === 0) {
-    console.log("invalid args, command required");
-    Deno.exit(1);
+    messageAndExitNonZero("invalid args, command required");
   }
   const args: Array<string> = [];
   let first = true;
@@ -43,14 +43,9 @@ function main() {
   switch (command) {
     case "generate": {
       if (args.length !== 1) {
-        console.log("target required");
-        Deno.exit(1);
+        messageAndExitNonZero("target required");
       }
-      const vers = Deno.env.get("VERSION");
-      if (vers === undefined) {
-        console.log("VERSION not set");
-        Deno.exit(1);
-      }
+      const vers = getEnv("VERSION");
       const target = args[0];
       for (const command of Object.getOwnPropertyNames(COMMANDS)) {
         Deno.writeTextFileSync(
@@ -71,8 +66,7 @@ exec ${EXECUTABLE} ${command} $@`,
       break;
     }
     default:
-      console.log("unknown subcommand");
-      Deno.exit(1);
+      messageAndExitNonZero("unknown subcommand");
   }
 }
 

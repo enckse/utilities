@@ -1,6 +1,7 @@
 import { join } from "std/path/mod.ts";
 import { existsSync } from "std/fs/mod.ts";
 import { red, yellow } from "std/fmt/colors.ts";
+import { getEnv, messageAndExitNonZero } from "./common.ts";
 
 class Result {
   constructor(
@@ -104,11 +105,7 @@ function stat(dir: string, early: boolean): Array<string> {
 }
 
 export function uncommit(args: Array<string>) {
-  const dirs = Deno.env.get("GIT_UNCOMMIT");
-  if (dirs === undefined || dirs === "") {
-    console.log("GIT_UNCOMMIT not set");
-    Deno.exit(1);
-  }
+  const dirs = getEnv("GIT_UNCOMMIT");
   let quiet = false;
   if (args.length > 0) {
     switch (args[0]) {
@@ -128,8 +125,7 @@ export function uncommit(args: Array<string>) {
         quiet = true;
         break;
       default:
-        console.log("unknown subcommand");
-        Deno.exit(1);
+        messageAndExitNonZero("unknown subcommand");
     }
   }
   let items: Array<string> = [];

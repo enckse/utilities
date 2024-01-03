@@ -5,6 +5,7 @@ import { encodeHex } from "std/encoding/hex.ts";
 import { parse } from "std/csv/mod.ts";
 import { red } from "std/fmt/colors.ts";
 import { parse as parseConfig } from "std/yaml/mod.ts";
+import { getEnv, messageAndExitNonZero } from "./common.ts";
 
 const LIST_COMMAND = "ls";
 const SHOW_COMMAND = "show";
@@ -205,8 +206,9 @@ class App {
     entry: string,
   ): Promise<Array<string>> {
     if (entry.endsWith(GROUP_SEPARATOR)) {
-      console.log("invalid entry, group detected");
-      Deno.exit(1);
+      messageAndExitNonZero(
+        "invalid entry, group detected",
+      );
     }
     const args: Array<string> = ["--show-protected"];
     if (totp) {
@@ -223,8 +225,9 @@ class App {
         return val;
       }
     }
-    console.log("unable to find entry");
-    Deno.exit(1);
+    return messageAndExitNonZero<Array<string>>(
+      "unable to find entry",
+    );
   }
   private async output(val: string, clip: boolean) {
     if (!clip) {
@@ -246,16 +249,14 @@ class App {
   }
   async showClip(clip: boolean, entry: string) {
     if (entry.endsWith(TOTP_TOKEN)) {
-      console.log("invalid entry, is totp token");
-      Deno.exit(1);
+      messageAndExitNonZero("invalid entry, is totp token");
     }
     const val = await this.entry(clip, false, entry);
     this.output(val[0].trim(), clip);
   }
   async totp(clip: boolean, entry: string) {
     if (!entry.endsWith(TOTP_TOKEN)) {
-      console.log("invalid entry, is not totp");
-      Deno.exit(1);
+      messageAndExitNonZero("invalid entry, is not totp");
     }
     const val = await this.entry(clip, true, entry);
     val.forEach((v) => {
@@ -348,19 +349,13 @@ async function hashValue(value: Uint8Array): Promise<string> {
 
 export async function lockbox(args: Array<string>) {
   if (args.length === 0) {
-    console.log("arguments required");
-    Deno.exit(1);
+    messageAndExitNonZero("arguments required");
   }
   const command = args[0];
-  const home = Deno.env.get("HOME");
-  if (home === undefined) {
-    console.log("HOME is not set");
-    Deno.exit(1);
-  }
+  const home = getEnv("HOME");
   const config = join(home, ".config", "voidedtech", "lb.yaml");
   if (!existsSync(config)) {
-    console.log("missing configuration file");
-    Deno.exit(1);
+    messageAndExitNonZero("missing configuration file");
   }
   const data = new TextDecoder().decode(Deno.readFileSync(config));
   const yaml = parseConfig(data.replaceAll("~", home)) as Config;
@@ -375,8 +370,7 @@ export async function lockbox(args: Array<string>) {
   switch (command) {
     case TOTP_COMMAND: {
       if (args.length < 2) {
-        console.log("invalid totp arguments");
-        Deno.exit(1);
+        messageAndExitNonZero("invalid totp arguments");
       }
       const sub = args[1];
       switch (sub) {
@@ -390,8 +384,7 @@ export async function lockbox(args: Array<string>) {
           await app.totp(sub === CLIP_COMMAND, args[2]);
           break;
         default:
-          console.log("unknown totp command");
-          Deno.exit(1);
+          messageAndExitNonZero("unknown totp command");
       }
       break;
     }
@@ -421,14 +414,12 @@ export async function lockbox(args: Array<string>) {
       break;
     }
     default:
-      console.log("unknown command");
-      Deno.exit(1);
+      messageAndExitNonZero("unknown command");
   }
 }
 
 function requireArgs(args: Array<string>, count: number) {
   if (args.length !== count) {
-    console.log("invalid arguments passed");
-    Deno.exit(1);
+    messageAndExitNonZero("invalid arguments passed");
   }
 }
