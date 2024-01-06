@@ -221,7 +221,13 @@ class App {
     for (const allow of allowed) {
       const tryArgs = args.concat(["--attributes", allow, entry]);
       const val = await this.query("show", tryArgs);
-      if (val.length > 0) {
+      let viable = false;
+      val.forEach((x) => {
+        if (x.trim() !== "") {
+          viable = true;
+        }
+      });
+      if (viable) {
         return val;
       }
     }
@@ -252,7 +258,7 @@ class App {
       messageAndExitNonZero("invalid entry, is totp token");
     }
     const val = await this.entry(clip, false, entry);
-    this.output(val[0].trim(), clip);
+    this.output(val.join("\n").trim(), clip);
   }
   async totp(clip: boolean, entry: string) {
     if (!entry.endsWith(TOTP_TOKEN)) {
